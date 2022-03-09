@@ -1,39 +1,60 @@
-import { renderHook, act } from '@testing-library/react-hooks';
 import fetchMock from 'jest-fetch-mock';
-
+import { mocked } from 'ts-jest/utils';
+import { renderHook, act } from '@testing-library/react-hooks';
 import { AuthProvider, useAuth } from './auth';
+import { startAsync } from 'expo-auth-session';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 fetchMock.enableMocks();
 
-const userTest = {
-  id: 'any_id',
-  email: 'paulohbs17@gmail.com',
-  name: 'Henrique Barbosa',
-  photo: 'any_photo.png'
-};
+jest.mock('expo-auth-session');
 
-jest.mock('expo-auth-session', () => {
-  return {
-    startAsync: () => ({
+describe('Auth hook', () => {
+
+  beforeEach(async () => {
+    const userCollectionKey = "@gofinances:user";
+    await AsyncStorage.removeItem(userCollectionKey);
+  });
+
+  it('must be able to sign in with an existing Google account', async () => {
+    const userTest = {
+      id: 'any_id',
+      email: 'paulohbs17@gmail.com',
+      name: 'Henrique Barbosa',
+      photo: 'any_photo.png'
+    };
+    
+    const googleMocked = mocked(startAsync as any);
+
+    googleMocked.mockReturnValueOnce({
       type: 'success',
       params: {
         access_token: 'any_token',
-      }
-    }),
-  }
-})
-
-describe('Auth Hook', () => {
-    it('should be able to sign in with Google account existing', async () => {
-        fetchMock.mockResponseOnce(JSON.stringify(userTest));
-
-        const { result } = renderHook(() => useAuth(), {
-            wrapper: AuthProvider
-        });
-
-        await act(() => result.current.sighInWithGoogle());
-
-        expect(result.current.user.email)
-        .toBe(userTest.email);
+      }   
     });
+
+    fetchMock.mockResponseOnce(JSON.stringify(userTest));
+    const { result } = renderHook(() => useAuth(),{
+      wrapper: AuthProvider
+    });
+
+    await act(() => result.current.sighInWithGoogle());
+    expect(result.current.user.email).toBe(userTest.email);
+  });
+
+  it('user should not connect if cancel authentication with Google', async () => {
+    const googleMocked = mocked(startAsync as any);
+
+    googleMocked.mockReturnValueOnce({
+      type: 'cancel',
+    });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider
+    });
+
+    await act(() => result.current.sighInWithGoogle());
+    expect(result.current.user).not.toHaveProperty('id');
+  });
+
 });

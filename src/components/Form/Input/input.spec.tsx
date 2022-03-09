@@ -9,7 +9,7 @@ const Providers: React.FC = ({ children }) => (
     <ThemeProvider theme={theme}>
         { children }
     </ThemeProvider>
-)
+);
 
 describe('Input Component', () => {
 
