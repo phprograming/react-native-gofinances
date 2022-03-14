@@ -58,7 +58,7 @@ export function Register (){
         name: 'Categoria'
     });
 
-    const navigation = useNavigation();
+    //const navigation = useNavigation();
 
     const {
         control,
@@ -74,7 +74,7 @@ export function Register (){
     }
 
     function handleOpenSelectCategoryModal(){
-        setCategoryModalOpen(true);
+        setCategoryModalOpen(true); 
     }
 
     function handleCloseSelectCategoryModal(){
